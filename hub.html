@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGREE II 評価システム ポータル</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 text-slate-800">
+
+  <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+    <div class="text-center mb-10">
+      <div class="bg-indigo-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/20">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">AGREE II 診療ガイドライン評価システム</h1>
+      <p class="text-sm text-slate-500 mt-2">評価の入力と、集計結果の分析ポータル</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdw3wq4baqpaGMAsV83NQiMwYQcXT5LYq72k-dW9d9unayiZA/viewform?usp=header" target="_blank" class="group block bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-500/30 rounded-2xl p-6 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="text-indigo-600 bg-indigo-50 group-hover:bg-indigo-100 w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        </div>
+        <h2 class="font-bold text-base text-slate-800 mb-1">1. 評価を入力する</h2>
+        <p class="text-xs text-slate-500 leading-relaxed">Googleフォームを開き、各領域の評価点とコメントを入力します。</p>
+      </a>
+
+      <a href="./index.html" class="group block bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-500/30 rounded-2xl p-6 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="text-emerald-600 bg-emerald-50 group-hover:bg-emerald-100 w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
+        </div>
+        <h2 class="font-bold text-base text-slate-800 mb-1">2. 結果を分析する</h2>
+        <p class="text-xs text-slate-500 leading-relaxed">集計ダッシュボードを開きます。スプレッドシートから書き出したCSVを読み込ませてください。</p>
+      </a>
+
+    </div>
+
+    <div class="mt-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-400">
+      ※本システムはローカルブラウザ処理を採用しており、機密データは外部に送信されません。
+    </div>
+  </div>
+
+</body>
+</html>
