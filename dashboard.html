@@ -19,36 +19,30 @@
       box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 12px -3px rgba(0, 0, 0, 0.03);
     }
 
-    /* ==========================================
-       🖨️ 印刷・PDF出力用のスタイル（最重要追加）
-       ========================================== */
+    /* 印刷・PDF出力用のスタイル */
     @media print {
-      /* 背景グラデーションを白に変更し、余計な余白を削る */
       body {
         background: #ffffff !important;
         color: #000000 !important;
         padding-bottom: 0 !important;
       }
-      /* 印刷に不要なUI要素（インポート枠、ボタン、ヘッダーのバッジ等）を非表示 */
       .no-print, 
       header button, 
       header span,
       section:has(#dropZone), 
-      section:has(#guidelineListContainer) {
+      section:has(#guidelineListContainer),
+      #emptyState {
         display: none !important;
       }
-      /* ヘッダーの固定位置を解除 */
       header {
         position: relative !important;
         box-shadow: none !important;
         border-bottom: 2px solid #e2e8f0 !important;
       }
-      /* ダッシュボードの各セクションを印刷の改ページで美しく配置 */
       .card-shadow {
         box-shadow: none !important;
         border: 1px solid #cbd5e1 !important;
       }
-      /* チャートとテーブルのグリッドを横並びに維持（1カラム化を防ぐ） */
       .grid-cols-1 {
         grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
       }
@@ -57,11 +51,9 @@
           grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
         }
       }
-      /* アコーディオンの中身を印刷時は強制的にすべて展開する */
       [id^="accordion-content-"] {
         display: block !important;
       }
-      /* アイコンの回転を戻す */
       [id^="accordion-icon-"] {
         display: none !important;
       }
@@ -82,7 +74,7 @@
         </div>
       </div>
       <div class="flex items-center space-x-3">
-        <button onclick="exportToPDF()" id="pdfBtn" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center gap-1.5">
+        <button onclick="exportToPDF()" id="pdfBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center gap-1.5">
           <i data-lucide="file-text" class="w-4 h-4"></i>
           結果をPDFで保存
         </button>
@@ -135,7 +127,7 @@
       </p>
     </div>
 
-    <div id="dashboardContent" class="hidden space-y-8">
+    <div id="dashboardContent" class="space-y-8">
 
       <section class="bg-white rounded-2xl p-6 card-shadow border border-slate-100">
         <div class="flex items-center justify-between mb-4">
@@ -144,7 +136,7 @@
             CSVから検出された評価対象ガイドライン
           </h2>
           <span id="detectedCountBadge" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2.5 py-0.5 rounded-full">
-            検出: 0種類
+            未読込
           </span>
         </div>
         
@@ -163,11 +155,11 @@
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <span class="text-xs font-bold uppercase tracking-widest text-emerald-400">📊 現在分析中の対象</span>
-            <h2 id="activeGuidelineName" class="text-2xl font-bold mt-1 tracking-tight">--</h2>
+            <h2 id="activeGuidelineName" class="text-2xl font-bold mt-1 tracking-tight">未選択</h2>
             <div class="flex flex-wrap items-center gap-3 mt-3">
               <span id="evaluatorCountText" class="text-xs bg-white/10 text-slate-200 border border-white/10 px-3 py-1 rounded-md flex items-center gap-1.5 font-medium">
                 <i data-lucide="users" class="w-3.5 h-3.5 text-emerald-400"></i>
-                評価者数: 0名
+                評価者数: --
               </span>
               <span id="rawNamesTooltip" class="text-xs bg-white/5 text-slate-300 px-3 py-1 rounded-md border border-white/5 cursor-help" title="">
                 名寄せ対象: --
@@ -203,11 +195,9 @@
               <i data-lucide="table" class="w-4 h-4"></i>
               領域別スコア集計（AGREE II 公式算定式）
             </h3>
-            
             <div class="space-y-3" id="domainScoresList">
               </div>
           </div>
-
           <div class="mt-6 pt-4 border-t border-slate-50 text-[11px] text-slate-400 leading-relaxed bg-slate-50 p-3 rounded-lg">
             ※ <strong>AGREE II 公式算定式:</strong><br>
             領域別評点（%）＝ (獲得スコア総計 － 最低可能スコア) ÷ (最高可能スコア － 最低可能スコア) × 100
@@ -252,7 +242,6 @@
         <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4 hidden print:block">
           評価者コメント詳細（全項目）
         </h3>
-
         <div class="space-y-4" id="commentsAccordion">
           </div>
       </section>
@@ -261,7 +250,6 @@
   </main>
 
   <script>
-    // --- グローバルステート ---
     let globalParsedData = []; 
     let groupedGuidelines = {}; 
     let activeGuidelineKey = ""; 
@@ -311,28 +299,32 @@
       const dropZone = document.getElementById('dropZone');
       const fileInput = document.getElementById('fileInput');
 
-      dropZone.addEventListener('click', () => fileInput.click());
+      if (dropZone) dropZone.addEventListener('click', () => fileInput.click());
       
-      dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('border-emerald-500', 'bg-emerald-50/20');
-      });
+      if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.classList.add('border-emerald-500', 'bg-emerald-50/20');
+        });
 
-      dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('border-emerald-500', 'bg-emerald-50/20');
-      });
+        dropZone.addEventListener('dragleave', () => {
+          dropZone.classList.remove('border-emerald-500', 'bg-emerald-50/20');
+        });
 
-      dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('border-emerald-500', 'bg-emerald-50/20');
-        const file = e.dataTransfer.files[0];
-        if (file) handleFile(file);
-      });
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('border-emerald-500', 'bg-emerald-50/20');
+          const file = e.dataTransfer.files[0];
+          if (file) handleFile(file);
+        });
+      }
 
-      fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) handleFile(file);
-      });
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) handleFile(file);
+        });
+      }
     }
 
     function handleFile(file) {
@@ -455,12 +447,12 @@
         return;
       }
 
-      document.getElementById('emptyState').classList.add('hidden');
-      document.getElementById('dashboardContent').classList.remove('hidden');
-      document.getElementById('detectedCountBadge').innerText = `検出: ${keys.length}種類`;
+      // 要素の存在チェックを挟んで安全に非表示に
+      const emptyStateEl = document.getElementById('emptyState');
+      if (emptyStateEl) emptyStateEl.classList.add('hidden');
       
-      // データ読み込みが成功したらPDF保存ボタンをヘッダーに表示
-      document.getElementById('pdfBtn').classList.remove('hidden');
+      const detectedBadgeEl = document.getElementById('detectedCountBadge');
+      if (detectedBadgeEl) detectedBadgeEl.innerText = `検出: ${keys.length}種類`;
 
       activeGuidelineKey = keys[0];
       
@@ -470,6 +462,7 @@
 
     function renderGuidelineList() {
       const container = document.getElementById('guidelineListContainer');
+      if (!container) return;
       container.innerHTML = "";
 
       Object.keys(groupedGuidelines).forEach(key => {
@@ -521,19 +514,25 @@
       const gData = groupedGuidelines[activeGuidelineKey];
       if (!gData) return;
 
-      document.getElementById('activeGuidelineName').innerText = gData.displayName;
-      document.getElementById('evaluatorCountText').innerHTML = `
-        <i data-lucide="users" class="w-3.5 h-3.5 text-emerald-400"></i>
-        評価者数: ${gData.evaluators.length}名
-      `;
+      const activeNameEl = document.getElementById('activeGuidelineName');
+      if (activeNameEl) activeNameEl.innerText = gData.displayName;
+
+      const evalCountEl = document.getElementById('evaluatorCountText');
+      if (evalCountEl) {
+        evalCountEl.innerHTML = `<i data-lucide="users" class="w-3.5 h-3.5 text-emerald-400"></i> 評価者数: ${gData.evaluators.length}名`;
+      }
 
       const rawNamesArr = Array.from(gData.rawNames);
       const rawNamesTooltip = document.getElementById('rawNamesTooltip');
-      rawNamesTooltip.title = "入力表記: " + rawNamesArr.join(' / ');
-      rawNamesTooltip.innerText = rawNamesArr.length > 1 ? `表記揺れ ${rawNamesArr.length}種を自動統合` : "表記統一済";
+      if (rawNamesTooltip) {
+        rawNamesTooltip.title = "入力表記: " + rawNamesArr.join(' / ');
+        rawNamesTooltip.innerText = rawNamesArr.length > 1 ? `表記揺れ ${rawNamesArr.length}種を自動統合` : "表記統一済";
+      }
 
       const results = calculateScores(gData.evaluators);
-      document.getElementById('totalQualityAvg').innerText = results.totalQualityAvg.toFixed(1);
+      
+      const qualityAvgEl = document.getElementById('totalQualityAvg');
+      if (qualityAvgEl) qualityAvgEl.innerText = results.totalQualityAvg.toFixed(1);
 
       renderDomainTable(results.domainScores);
       drawRadarChart(results.domainScores);
@@ -553,55 +552,36 @@
         const scores = evaluators.map(ev => ev.scores[i]);
         const sum = scores.reduce((a, b) => a + b, 0);
         const avg = sum / N;
-        
         const variance = scores.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / N;
         const stdDev = Math.sqrt(variance);
 
-        itemStats[i] = {
-          sum: sum,
-          avg: avg,
-          stdDev: stdDev,
-          scores: scores
-        };
+        itemStats[i] = { sum: sum, avg: avg, stdDev: stdDev, scores: scores };
       }
 
       domainDef.forEach(domain => {
         const k = domain.questions.length; 
         const maxPossible = 7 * k * N; 
         const minPossible = 1 * k * N; 
-        
         let actualSum = 0;
-        domain.questions.forEach(qNum => {
-          actualSum += itemStats[qNum].sum;
-        });
+        domain.questions.forEach(qNum => { actualSum += itemStats[qNum].sum; });
 
         let pct = 0;
-        if (maxPossible !== minPossible) {
-          pct = ((actualSum - minPossible) / (maxPossible - minPossible)) * 100;
-        }
-
+        if (maxPossible !== minPossible) { pct = ((actualSum - minPossible) / (maxPossible - minPossible)) * 100; }
         domainScores.push({
-          id: domain.id,
-          name: domain.name,
-          scorePct: Math.round(pct * 10) / 10, 
-          actualSum: actualSum,
-          maxPossible: maxPossible,
-          minPossible: minPossible
+          id: domain.id, name: domain.name, scorePct: Math.round(pct * 10) / 10,
+          actualSum: actualSum, maxPossible: maxPossible, minPossible: minPossible
         });
       });
 
       const totalQualities = evaluators.map(ev => ev.totalQuality);
       const totalQualityAvg = totalQualities.reduce((a, b) => a + b, 0) / N;
 
-      return {
-        domainScores: domainScores,
-        itemStats: itemStats,
-        totalQualityAvg: totalQualityAvg
-      };
+      return { domainScores: domainScores, itemStats: itemStats, totalQualityAvg: totalQualityAvg };
     }
 
     function renderDomainTable(scores) {
       const container = document.getElementById('domainScoresList');
+      if (!container) return;
       container.innerHTML = "";
 
       scores.forEach(d => {
@@ -628,13 +608,13 @@
     }
 
     function drawRadarChart(domainScores) {
-      const ctx = document.getElementById('agreeRadarChart').getContext('2d');
+      const canvas = document.getElementById('agreeRadarChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
       const labels = domainScores.map(d => d.name.split('.')[0] + '.' + d.name.split('.')[1]); 
       const dataValues = domainScores.map(d => d.scorePct);
 
-      if (radarChartInstance) {
-        radarChartInstance.destroy();
-      }
+      if (radarChartInstance) { radarChartInstance.destroy(); }
 
       radarChartInstance = new Chart(ctx, {
         type: 'radar',
@@ -656,11 +636,7 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
+          plugins: { legend: { display: false } },
           scales: {
             r: {
               angleLines: { color: 'rgba(226, 232, 240, 0.6)' },
@@ -669,14 +645,8 @@
                 font: { family: 'Noto Sans JP', size: 11, weight: '600' },
                 color: '#475569'
               },
-              suggestedMin: 0,
-              suggestedMax: 100,
-              ticks: {
-                stepSize: 20,
-                backdropColor: 'transparent',
-                color: '#94a3b8',
-                font: { size: 9 }
-              }
+              suggestedMin: 0, suggestedMax: 100,
+              ticks: { stepSize: 20, backdropColor: 'transparent', color: '#94a3b8', font: { size: 9 } }
             }
           }
         }
@@ -685,18 +655,13 @@
 
     function renderDiscrepancy(itemStats) {
       const container = document.getElementById('discrepancyContainer');
+      if (!container) return;
       container.innerHTML = "";
 
       const alertItems = [];
       for (let i = 1; i <= 23; i++) {
         if (itemStats[i].stdDev >= 1.25) {
-          alertItems.push({
-            num: i,
-            text: questionTexts[i],
-            avg: itemStats[i].avg,
-            stdDev: itemStats[i].stdDev,
-            scores: itemStats[i].scores
-          });
+          alertItems.push({ num: i, text: questionTexts[i], avg: itemStats[i].avg, stdDev: itemStats[i].stdDev, scores: itemStats[i].scores });
         }
       }
 
@@ -718,15 +683,9 @@
         card.innerHTML = `
           <div>
             <div class="flex items-center justify-between gap-2 mb-1.5">
-              <span class="text-xs font-extrabold text-amber-700 bg-amber-100/60 px-2 py-0.5 rounded-md">
-                項目 ${item.num}
-              </span>
-              <span class="text-[10px] text-slate-500 font-medium no-print">
-                ばらつき(標準偏差): <strong>${item.stdDev.toFixed(2)}</strong>
-              </span>
-              <span class="text-[10px] text-slate-500 font-medium hidden print:inline">
-                標準偏差: <strong>${item.stdDev.toFixed(2)}</strong>
-              </span>
+              <span class="text-xs font-extrabold text-amber-700 bg-amber-100/60 px-2 py-0.5 rounded-md">項目 ${item.num}</span>
+              <span class="text-[10px] text-slate-500 font-medium no-print">ばらつき(標準偏差): <strong>${item.stdDev.toFixed(2)}</strong></span>
+              <span class="text-[10px] text-slate-500 font-medium hidden print:inline">標準偏差: <strong>${item.stdDev.toFixed(2)}</strong></span>
             </div>
             <p class="font-bold text-xs text-slate-800 leading-relaxed mb-3">${item.text}</p>
           </div>
@@ -734,18 +693,12 @@
             <div class="flex items-center gap-2 text-[11px] mb-2">
               <span class="text-slate-400">各評価者の点数:</span>
               <div class="flex gap-1">
-                ${item.scores.map(s => `
-                  <span class="w-5 h-5 flex items-center justify-center text-[10px] font-extrabold rounded-full ${
-                    s >= 6 ? 'bg-emerald-500 text-white' : s >= 4 ? 'bg-amber-400 text-slate-800' : 'bg-rose-400 text-white'
-                  }">${s}</span>
-                `).join('')}
+                ${item.scores.map(s => `<span class="w-5 h-5 flex items-center justify-center text-[10px] font-extrabold rounded-full ${s >= 6 ? 'bg-emerald-500 text-white' : s >= 4 ? 'bg-amber-400 text-slate-800' : 'bg-rose-400 text-white'}">${s}</span>`).join('')}
               </div>
             </div>
             <div class="text-[11px] text-slate-500 bg-white border border-slate-100/80 p-2 rounded flex items-center justify-between">
               <span>平均評点: <strong>${item.avg.toFixed(1)}</strong></span>
-              <span class="text-indigo-600 font-bold hover:underline cursor-pointer flex items-center gap-0.5 no-print" onclick="scrollToQuestion(${item.num})">
-                この項目のコメントを見る <i data-lucide="arrow-right-circle" class="w-3.5 h-3.5"></i>
-              </span>
+              <span class="text-indigo-600 font-bold hover:underline cursor-pointer flex items-center gap-0.5 no-print" onclick="scrollToQuestion(${item.num})">この項目のコメントを見る <i data-lucide="arrow-right-circle" class="w-3.5 h-3.5"></i></span>
             </div>
           </div>
         `;
@@ -755,16 +708,15 @@
 
     function renderRecommendationBreakdown(evaluators) {
       const container = document.getElementById('recommendationBreakdown');
+      if (!container) return;
       container.innerHTML = "";
 
       const counts = { '推奨する': 0, '推奨する（条件付き）': 0, '推奨しない': 0 };
-
       evaluators.forEach(ev => {
         let val = ev.recommendVal ? ev.recommendVal.trim() : '推奨する（条件付き）';
         if (val.includes('条件付き')) val = '推奨する（条件付き）';
         else if (val.includes('推奨しない')) val = '推奨しない';
         else if (val.includes('推奨する')) val = '推奨する';
-        
         if (counts[val] !== undefined) counts[val]++;
         else counts['推奨する（条件付き）']++;
       });
@@ -795,6 +747,7 @@
 
     function renderCommentsAccordion(evaluators) {
       const container = document.getElementById('commentsAccordion');
+      if (!container) return;
       container.innerHTML = "";
 
       for (let i = 1; i <= 23; i++) {
@@ -803,9 +756,7 @@
         group.className = "border border-slate-100 rounded-xl bg-slate-50/30 overflow-hidden transition-all";
         
         const itemComments = evaluators.map(ev => ({
-          evalName: ev.name,
-          score: ev.scores[i],
-          comment: ev.comments[i] ? ev.comments[i].trim() : ""
+          evalName: ev.name, score: ev.scores[i], comment: ev.comments[i] ? ev.comments[i].trim() : ""
         })).filter(ic => ic.comment !== "");
 
         const avgScore = evaluators.map(ev => ev.scores[i]).reduce((a,b)=>a+b,0) / evaluators.length;
@@ -813,20 +764,16 @@
         group.innerHTML = `
           <button onclick="toggleAccordion(${i})" class="w-full p-4 flex items-center justify-between bg-white text-left hover:bg-slate-50/80 transition-colors focus:outline-none">
             <div class="flex items-center space-x-3 pr-4">
-              <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center text-xs font-bold bg-slate-100 text-slate-700 rounded-lg">
-                Q${i}
-              </span>
+              <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center text-xs font-bold bg-slate-100 text-slate-700 rounded-lg">Q${i}</span>
               <div>
                 <p class="font-bold text-xs text-slate-800 leading-snug">${questionTexts[i]}</p>
                 <p class="text-[10px] text-slate-400 mt-1">
-                  平均評点: <strong>${avgScore.toFixed(1)}</strong> / 7.0 
-                  &nbsp;&bull;&nbsp; 記入されたコメント: <strong class="${itemComments.length > 0 ? 'text-indigo-600' : ''}">${itemComments.length}件</strong>
+                  平均評点: <strong>${avgScore.toFixed(1)}</strong> / 7.0 &nbsp;&bull;&nbsp; 記入されたコメント: <strong class="${itemComments.length > 0 ? 'text-indigo-600' : ''}">${itemComments.length}件</strong>
                 </p>
               </div>
             </div>
             <i data-lucide="chevron-down" id="accordion-icon-${i}" class="w-4 h-4 text-slate-400 transform transition-transform duration-200"></i>
           </button>
-          
           <div id="accordion-content-${i}" class="hidden border-t border-slate-100 bg-white print:block">
             <div class="p-4 space-y-3">
               ${itemComments.length === 0 
@@ -834,9 +781,7 @@
                 : itemComments.map(ic => `
                   <div class="p-3 bg-slate-50/50 rounded-lg border border-slate-100/50 flex flex-col md:flex-row gap-3">
                     <div class="md:w-48 flex-shrink-0 flex items-start gap-2">
-                      <span class="w-5 h-5 flex-shrink-0 flex items-center justify-center text-[10px] font-extrabold rounded-full ${
-                        ic.score >= 6 ? 'bg-emerald-500 text-white' : ic.score >= 4 ? 'bg-amber-400 text-slate-800' : 'bg-rose-400 text-white'
-                      }">${ic.score}</span>
+                      <span class="w-5 h-5 flex-shrink-0 flex items-center justify-center text-[10px] font-extrabold rounded-full ${ic.score >= 6 ? 'bg-emerald-500 text-white' : ic.score >= 4 ? 'bg-amber-400 text-slate-800' : 'bg-rose-400 text-white'}">${ic.score}</span>
                       <div class="text-xs">
                         <p class="font-bold text-slate-700 leading-none">${ic.evalName}</p>
                         <p class="text-[9px] text-slate-400 mt-1">評点: ${ic.score}/7</p>
@@ -856,9 +801,7 @@
       totalGroup.className = "border border-slate-100 rounded-xl bg-indigo-50/20 overflow-hidden mt-6";
       
       const generalComments = evaluators.map(ev => ({
-        evalName: ev.name,
-        quality: ev.totalQuality,
-        recommend: ev.recommendVal,
+        evalName: ev.name, quality: ev.totalQuality, recommend: ev.recommendVal,
         qualityComment: ev.totalQualityComment ? ev.totalQualityComment.trim() : "",
         recommendComment: ev.recommendComment ? ev.recommendComment.trim() : ""
       })).filter(g => g.qualityComment !== "" || g.recommendComment !== "");
@@ -866,19 +809,14 @@
       totalGroup.innerHTML = `
         <button onclick="toggleAccordion(99)" class="w-full p-4 flex items-center justify-between bg-indigo-50/30 text-left hover:bg-indigo-50/50 transition-colors focus:outline-none">
           <div class="flex items-center space-x-3 pr-4">
-            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center text-xs font-bold bg-indigo-100 text-indigo-700 rounded-lg">
-              ★
-            </span>
+            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center text-xs font-bold bg-indigo-100 text-indigo-700 rounded-lg">★</span>
             <div>
               <p class="font-bold text-xs text-slate-800 leading-snug">全体の質・使用推奨判定に関するコメント</p>
-              <p class="text-[10px] text-slate-400 mt-1">
-                記入された全体総括コメント: <strong class="text-indigo-600">${generalComments.length}件</strong>
-              </p>
+              <p class="text-[10px] text-slate-400 mt-1">記入された全体総括コメント: <strong class="text-indigo-600">${generalComments.length}件</strong></p>
             </div>
           </div>
           <i data-lucide="chevron-down" id="accordion-icon-99" class="w-4 h-4 text-indigo-400 transform transition-transform duration-200"></i>
         </button>
-        
         <div id="accordion-content-99" class="hidden border-t border-indigo-100/50 bg-white print:block">
           <div class="p-4 space-y-4">
             ${generalComments.length === 0 
@@ -886,28 +824,15 @@
               : generalComments.map(gc => `
                 <div class="p-4 bg-indigo-50/10 rounded-xl border border-indigo-100/30">
                   <div class="flex wrap items-center justify-between border-b border-slate-100 pb-2 mb-3 gap-2">
-                    <span class="font-bold text-xs text-indigo-800 flex items-center gap-1.5">
-                      <i data-lucide="user" class="w-3.5 h-3.5"></i> ${gc.evalName}
-                    </span>
+                    <span class="font-bold text-xs text-indigo-800 flex items-center gap-1.5"><i data-lucide="user" class="w-3.5 h-3.5"></i> ${gc.evalName}</span>
                     <div class="flex items-center gap-3 text-[10px]">
                       <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">全体の質: ${gc.quality}/7</span>
                       <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">推奨度: ${gc.recommend}</span>
                     </div>
                   </div>
-                  
                   <div class="space-y-3">
-                    ${gc.qualityComment ? `
-                      <div>
-                        <h5 class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">全体の質に対する見解:</h5>
-                        <p class="text-xs text-slate-600 mt-1 leading-relaxed whitespace-pre-line">${gc.qualityComment}</p>
-                      </div>
-                    ` : ''}
-                    ${gc.recommendComment ? `
-                      <div>
-                        <h5 class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">推奨判定に対する見解・条件:</h5>
-                        <p class="text-xs text-slate-600 mt-1 leading-relaxed whitespace-pre-line">${gc.recommendComment}</p>
-                      </div>
-                    ` : ''}
+                    ${gc.qualityComment ? `<div><h5 class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">全体の質に対する見解:</h5><p class="text-xs text-slate-600 mt-1 leading-relaxed whitespace-pre-line">${gc.qualityComment}</p></div>` : ''}
+                    ${gc.recommendComment ? `<div><h5 class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">推奨判定に対する見解・条件:</h5><p class="text-xs text-slate-600 mt-1 leading-relaxed whitespace-pre-line">${gc.recommendComment}</p></div>` : ''}
                   </div>
                 </div>
               `).join('')
@@ -921,6 +846,7 @@
     function toggleAccordion(id) {
       const content = document.getElementById(`accordion-content-${id}`);
       const icon = document.getElementById(`accordion-icon-${id}`);
+      if (!content || !icon) return;
       if (content.classList.contains('hidden')) {
         content.classList.remove('hidden');
         icon.classList.add('rotate-180');
@@ -934,26 +860,16 @@
       for (let i = 1; i <= 23; i++) {
         const content = document.getElementById(`accordion-content-${i}`);
         const icon = document.getElementById(`accordion-icon-${i}`);
-        if (content) {
-          if (open) {
-            content.classList.remove('hidden');
-            icon.classList.add('rotate-180');
-          } else {
-            content.classList.add('hidden');
-            icon.classList.remove('rotate-180');
-          }
+        if (content && icon) {
+          if (open) { content.classList.remove('hidden'); icon.classList.add('rotate-180'); }
+          else { content.classList.add('hidden'); icon.classList.remove('rotate-180'); }
         }
       }
       const totalContent = document.getElementById('accordion-content-99');
       const totalIcon = document.getElementById('accordion-icon-99');
-      if (totalContent) {
-        if (open) {
-          totalContent.classList.remove('hidden');
-          totalIcon.classList.add('rotate-180');
-        } else {
-          totalContent.classList.add('hidden');
-          totalIcon.classList.remove('rotate-180');
-        }
+      if (totalContent && totalIcon) {
+        if (open) { totalContent.classList.remove('hidden'); totalIcon.classList.add('rotate-180'); }
+        else { totalContent.classList.add('hidden'); totalIcon.classList.remove('rotate-180'); }
       }
     }
 
@@ -962,23 +878,15 @@
       if (el) {
         const content = document.getElementById(`accordion-content-${qNum}`);
         const icon = document.getElementById(`accordion-icon-${qNum}`);
-        content.classList.remove('hidden');
-        icon.classList.add('rotate-180');
-        
+        if (content && icon) { content.classList.remove('hidden'); icon.classList.add('rotate-180'); }
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.classList.add('ring-2', 'ring-indigo-500');
         setTimeout(() => { el.classList.remove('ring-2', 'ring-indigo-500'); }, 1500);
       }
     }
 
-    // ==========================================
-    // 🖨️ PDF保存の実行処理（追加）
-    // ==========================================
     function exportToPDF() {
-      // 印刷前にアコーディオンの展開を調整（CSS側でも強制設定していますが念のため）
       toggleAllComments(true);
-      
-      // ブラウザ標準の印刷ダイアログ（PDF保存）を起動
       window.print();
     }
 
@@ -988,8 +896,7 @@
 2026/06/18 10:15:00,高血圧治療ガイドライン２０２６,評価者B,6,,6,,7,子供への配慮もある。,6,,5,文献調査のみ。,6,,7,,6,,4,グレード評価が一部簡略化されている。,2,合意プロセスが不透明（不一致大）。,7,,6,,5,,5,,2,専門家による査読は計画段階のみ。,6,具体的で使いやすい。,5,,7,,3,,5,,3,,4,,6,,5,,5,,5,全体レビュー,推奨する（条件付き）,条件としては改訂予定の明確化。
 2026/06/18 10:30:00,高血圧治療ガイドライン 2026 ,評価者C,7,,6,,6,,5,,4,,7,,6,,5,,4,,1,投票結果が非公開（不一致大）。,6,,6,,6,,1,査読記録がない。,3,更新間隔が長すぎる。,6,,5,,6,,2,地域バイアスがある。,6,,3,予算へのインパクト検討不足。,3,,5,,6,,6,全体の質は高いと思います。,6,高いクオリティ,推奨する（条件付き）,条件は外部レビューの実施。
 2026/06/18 11:00:00,糖尿病診療ガイドライン 2025,評価者X,7,対象が明確です。,6,,7,,7,各専門医が勢揃い。,6,,6,,6,,6,,5,,6,,6,,6,,6,,6,,6,最新のエビデンス。,6,曖昧さは全くない。,7,,6,,4,,6,患者用冊子がある。,5,,5,,7,,7,,6,非常に高い完成度です。,7,素晴らしい出来栄え,推奨する,
-2026/06/18 11:20:00,糖尿病診療ガイドライン2025,評価者Y,6,,7,,6,,6,,7,患者委員会からのフィードバック反映。,5,,7,,6,,5,,5,,6,,5,,6,,5,,5,,7,,6,,5,,3,コスト面の記載が少ない。,5,,4,,5,,6,,6,,6,糖尿病管理にすぐ使えます。,6,臨床で使いやすい,推奨する,推奨に賛成します。
-`;
+2026/06/18 11:20:00,糖尿病診療ガイドライン2025,評価者Y,6,,7,,6,,6,,7,患者委員会からのフィードバック反映。,5,,7,,6,,5,,5,,6,,5,,6,,5,,5,,7,,6,,5,,3,コスト面の記載が少ない。,5,,4,,5,,6,,6,,6,糖尿病管理にすぐ使いめます。,6,臨床で使いやすい,推奨する,推奨に賛成します。`;
       processCSVText(sampleCSV);
     }
   </script>
